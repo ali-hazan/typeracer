@@ -1,9 +1,9 @@
 <template>
   <div class="text-box">
-    <span class="history">{{ history }}</span>
-    <span class="current-letter"></span>
-    <span class="current-word">{{ currentWord }}</span>
-    <span class="remaining">{{ remaining }}</span>
+    <span class="history">{{ history + ' ' }}</span>
+    <span class="current-word">{{ currentWord.slice(0, currentLetterIndex) }}<span class="current-letter">{{
+      currentWord[currentLetterIndex] }}</span>{{ currentWord.slice(currentLetterIndex + 1) }}</span>
+    <span class="remaining"> {{ ' ' + remaining }}</span>
   </div>
 </template>
 
@@ -14,76 +14,84 @@ const props = defineProps({
     default: "",
   },
 });
-
-const emit = defineEmits(["next-word", "game-over"]);
-
+const emit = defineEmits(["next-word", "game-over", "is-wrong", "is-success"]);
 const { word } = toRefs(props);
-
 const text = `Hello world this is type racer game`;
-
 const currentWordIndex = ref(0);
 const currentLetterIndex = ref(0);
+
+const textArray = computed(() => {
+  return text.split(" ");
+});
+const history = computed(() => {
+  return textArray.value.slice(0, currentWordIndex.value).join(" ");
+});
+const currentWord = computed(() => {
+  return textArray.value[currentWordIndex.value];
+});
+const remaining = computed(() => {
+  return textArray.value.slice(currentWordIndex.value + 1).join(" ");
+});
 
 const resetGame = () => {
   currentWordIndex.value = 0;
   currentLetterIndex.value = 0;
 };
 
-const textArray = computed(() => {
-  return text.split(" ");
-});
-
-const history = computed(() => {
-  return textArray.value.slice(0, currentWordIndex.value).join(" ");
-});
-
-const currentWord = computed(() => {
-  return " " + textArray.value[currentWordIndex.value] + " ";
-});
-
-const remaining = computed(() => {
-  return textArray.value.slice(currentWordIndex.value + 1).join(" ");
-});
-
 const onNextWord = () => {
+  currentLetterIndex.value = 0
   if (textArray.value.length - 1 > currentWordIndex.value) {
     currentWordIndex.value = currentWordIndex.value + 1;
-    currentLetterIndex.value = -1;
   } else {
     emit("game-over");
     resetGame();
   }
 };
 
-const onPrevWord = () => {
-  if (currentWordIndex.value > 0) {
-    currentWordIndex.value = currentWordIndex.value - 1;
-    currentLetterIndex.value = currentWord.value.replace(/ +/g, "").length - 1;
-  }
-};
 
-const onNextCharacter = () => {
-  if (
-    currentWord.value.replace(/ +/g, "").length - 2 >
-    currentLetterIndex.value
-  ) {
-    currentLetterIndex.value = currentLetterIndex.value + 1;
-  } else {
-    onNextWord();
+const getLeastIndex = (str1: string, str2: string) => {
+  if (str1.length <= str2.length) {
+    return str1.length
   }
-};
-const onPrevCharacter = () => {
-  if (currentLetterIndex.value > 0) {
-    currentLetterIndex.value = currentLetterIndex.value - 1;
-  } else {
-    onPrevWord();
+  else {
+    return str2.length
   }
-};
+}
+
+const calculateCurrentLetterIndex = () => {
+  const currentWordWithoutSpace = currentWord.value.replace(/ +/g, "")
+  const limit = getLeastIndex(word.value, currentWordWithoutSpace)
+  let letterIndex = 0
+  let isSuccess = true
+  for (let i = 0; i < limit; i++) {
+    if (currentWordWithoutSpace[i] === word.value[i]) {
+      letterIndex = i
+    }
+    else {
+      isSuccess = false
+      break
+    }
+  }
+  isSuccess ? emit('is-success') : emit('is-wrong');
+
+  currentLetterIndex.value = letterIndex + 1
+}
 
 watch(word, (val) => {
-  if (val === currentWord.value.replace(/ +/g, "")) {
+  if (val.replace(/ +/g, "") === currentWord.value.replace(/ +/g, "")
+    && (val[val.length - 1] === ' '
+      || textArray.value.length - 1 === currentWordIndex.value)) {
     onNextWord();
     emit("next-word");
+    return
+  }
+  if (val) {
+    nextTick(() => {
+      calculateCurrentLetterIndex()
+    })
+  }
+  else {
+    currentLetterIndex.value = 0
   }
 });
 </script>
@@ -94,13 +102,42 @@ watch(word, (val) => {
   padding: 12px;
   font-size: 28px;
 }
+
 .history {
   background-color: white;
 }
+
 .current-word {
-  background-color: blue;
+  text-decoration: underline;
 }
-.remaining {
-  background-color: red;
+
+@keyframes border-anim {
+  0% {
+    border-left: 1px solid #000;
+  }
+
+  40% {
+    border-left: 1px solid #fff;
+  }
+
+  100% {
+    border-left: 1px solid #fff;
+  }
+}
+
+.current-letter {
+  position: relative;
+
+}
+
+.current-letter::before {
+  content: "";
+  position: absolute;
+  height: 32px;
+  width: 2px;
+  animation-name: border-anim;
+  animation-duration: 1000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in;
 }
 </style>
