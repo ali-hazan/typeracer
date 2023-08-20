@@ -9,19 +9,22 @@
 
 <script lang="ts" setup>
 const props = defineProps({
+  text: {
+    type: String,
+    default: "",
+  },
   word: {
     type: String,
     default: "",
   },
 });
-const emit = defineEmits(["next-word", "game-over", "is-wrong", "is-success"]);
+const emit = defineEmits(["next-word", "game-over", "is-wrong", "is-success", "on-progress"]);
 const { word } = toRefs(props);
-const text = `Hello world this is type racer game`;
 const currentWordIndex = ref(0);
 const currentLetterIndex = ref(0);
 
 const textArray = computed(() => {
-  return text.split(" ");
+  return props.text.split(" ");
 });
 const history = computed(() => {
   return textArray.value.slice(0, currentWordIndex.value).join(" ");
@@ -38,7 +41,14 @@ const resetGame = () => {
   currentLetterIndex.value = 0;
 };
 
+const calculateProgress = () => {
+  const totalWord = textArray.value.length;
+  const progress = currentWordIndex.value / (totalWord - 1) * 100
+  emit('on-progress', progress)
+}
+
 const onNextWord = () => {
+  calculateProgress()
   currentLetterIndex.value = 0
   if (textArray.value.length - 1 > currentWordIndex.value) {
     currentWordIndex.value = currentWordIndex.value + 1;
