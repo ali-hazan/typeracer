@@ -44,5 +44,6 @@ const computedXDirection = computed(() => {
 
 .sprite img {
     width: 98px;
+    display: block;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <TypeRacerTrack :progress="progress" />
+  <div class="type-racer">
+    <TypeRacerTrack :progress="progress" class="margin-bottom" />
     <TypeRacerTextBox :word="word" :text="text" @next-word="onNextWord" @is-wrong="onWrong" @is-success="onSucess"
       @on-progress="onProgress" />
     <input type="text" v-model="word" :class="currentInputWrong ? 'danger' : ''" />
@@ -31,7 +31,24 @@ const onSucess = () => {
 </script>
 
 <style scoped>
-input.danger {
-  background-color: brown;
+.type-racer {
+  max-width: 784px;
+  margin: auto;
+  text-align: center;
 }
-</style>
+
+input {
+  margin-top: 32px;
+  border: 1px solid #000;
+  font-size: 18px;
+  padding: 4px 8px;
+  outline: none;
+}
+
+input.danger {
+  color: red;
+}
+
+.margin-bottom {
+  margin-bottom: 48px;
+}</style>
